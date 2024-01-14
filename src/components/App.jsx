@@ -1,86 +1,73 @@
-import { Component } from 'react';
 import AddForm from './addContactForm/addContactForm';
 import ContactList from './contactList/contactList';
 import { nanoid } from 'nanoid';
 import Filter from './filter/filter';
+import { useEffect, useState } from 'react';
 
-class App extends Component {
-  state = {
-    contacts: null,
-    filter: '',
-  };
+const App = () => {
+  const [contacts, setContacts] = useState(null);
+  const [filterKeys, setFilterKeys] = useState('');
 
-  addContact = data => {
-    const newContact = { ...data, id: nanoid() };
-    const ifExist = this.state.contacts.find(
-      el => el.name.toLowerCase() === data.name.toLowerCase()
+  const addContact = (name, number) => {
+    const newContact = { name, number, id: nanoid() };
+
+    const ifExist = contacts.find(
+      el => el.name.toLowerCase() === name.toLowerCase()
     );
     if (ifExist) {
-      return alert(`${data.name} is already in contacts.`);
+      return alert(`${name} is already in contacts.`);
     } else {
-      this.setState(prev => ({
-        contacts: [...prev.contacts, newContact],
-      }));
-      // localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
+      setContacts(prev => [...prev, newContact]);
     }
   };
 
-  filter = filterName =>
-    this.setState({
-      filter: filterName,
-    });
-
-  delBtn = nameDel => {
-    return this.setState(prev => ({
-      contacts: prev.contacts.filter(elm => elm.name !== nameDel),
-    }));
+  const filter = filterName => {
+    setFilterKeys(filterName);
   };
 
-  componentDidMount() {
+  const delBtn = nameDel => {
+    setContacts(contacts.filter(elm => elm.name !== nameDel));
+  };
+
+  useEffect(() => {
     const initialData = [
       { id: 'id-1', name: 'Rosie Simpson', number: '459-12-56' },
       { id: 'id-2', name: 'Hermione Kline', number: '443-89-12' },
       { id: 'id-3', name: 'Eden Clements', number: '645-17-79' },
       { id: 'id-4', name: 'Annie Copeland', number: '227-91-26' },
     ];
-    const storageData = localStorage.getItem('contacts');
+    const storageData = JSON.parse(localStorage.getItem('contacts'));
+    console.log(storageData);
 
-    if (storageData && JSON.parse(storageData).length > 0) {
-      this.setState({
-        contacts: JSON.parse(storageData),
-      });
+    if (storageData && storageData.length > 0) {
+      setContacts(storageData);
     } else {
-      this.setState({
-        contacts: initialData,
-      });
+      setContacts(initialData);
       localStorage.setItem('contacts', JSON.stringify(initialData));
     }
-  }
+  }, []);
 
-  componentDidUpdate(prevPr, prevSt) {
-    if (prevSt.contacts !== this.state.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
+  useEffect(
+    prev => {
+      if (prev !== contacts) {
+        localStorage.setItem('contacts', JSON.stringify(contacts));
+      }
+    },
+    [contacts]
+  );
 
-  render() {
-    return (
-      <div>
-        <h1>Phonebook</h1>
-        <AddForm addContact={this.addContact} />
+  return (
+    <div>
+      <h1>Phonebook</h1>
+      <AddForm addContact={addContact} />
 
-        <h2>Contacts</h2>
-        <Filter filter={this.filter} />
-        {this.state.contacts && (
-          <ContactList
-            arr={this.state.contacts}
-            filter={this.state.filter}
-            delBtn={this.delBtn}
-          />
-        )}
-      </div>
-    );
-  }
-}
+      <h2>Contacts</h2>
+      <Filter filter={filter} />
+      {contacts && (
+        <ContactList arr={contacts} filter={filterKeys} delBtn={delBtn} />
+      )}
+    </div>
+  );
+};
 
 export default App;
